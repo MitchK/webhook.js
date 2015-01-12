@@ -42,6 +42,8 @@ var server = http.createServer(function(req, res) {
                 res.writeHead(500, {'Content-Type': 'text/plain'});
                 return res.end('Script error, check log file');
             }
+            
+            process.stdout.write(stdout);
         });
         
         
