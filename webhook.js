@@ -36,7 +36,7 @@ var server = http.createServer(function(req, res) {
         var json = JSON.parse(body);
         console.log('Payload received!');
         
-        exec('cd ' + process.env.WEBHOOK_REPO_PATH + '&& sh .webhook.sh', function (error, stdout, stderr) {
+        exec('cd ' + process.env.WEBHOOK_REPO_PATH + '&& git pull && sh .webhook.sh', function (error, stdout, stderr) {
             if (error) {
                 console.error(error);
                 res.writeHead(500, {'Content-Type': 'text/plain'});
