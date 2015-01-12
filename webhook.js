@@ -1,6 +1,7 @@
 var http = require('http');
 var crypto = require('crypto');
 var exec = require('child_process').exec;
+var path = require('path');
 
 if (!process.env.WEBHOOK_REPO_PATH) {
   throw Error("WEBHOOK_REPO_PATH env variable not set");
@@ -35,7 +36,7 @@ var server = http.createServer(function(req, res) {
         var json = JSON.parse(body);
         console.log('Payload received!');
         
-        exec('sh ' * path.join(process.env.WEBHOOK_REPO_PATH, '.webhook.sh'), function (error, stdout, stderr) {
+        exec('sh ' + path.join(process.env.WEBHOOK_REPO_PATH, '.webhook.sh'), function (error, stdout, stderr) {
             if (error) {
                 console.error(error);
                 res.writeHead(500, {'Content-Type': 'text/plain'});
