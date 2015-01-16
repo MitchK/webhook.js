@@ -14,6 +14,9 @@ if (!process.env.WEBHOOK_SECRET) {
 if (!process.env.WEBHOOK_REF_FILTER) {
   console.log("WARNING! WEBHOOK_REF_FILTER not set. This hook will listen to ANYTHING");
 }
+else {
+  console.log('INFO: Using ref filter: ' + process.env.WEBHOOK_REF_FILTER);
+}
 
 
 
