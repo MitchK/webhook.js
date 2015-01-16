@@ -80,7 +80,9 @@ var server = http.createServer(function(req, res) {
           if (process.env.WEBHOOK_REF_FILTER 
             && json.ref) {
 
-            if (json.ref.match(process.env.WEBHOOK_REF_FILTER).length > 0) {
+            var match = json.ref.match(process.env.WEBHOOK_REF_FILTER);
+
+            if (match && match.length > 0) {
               console.log("Push to " + json.ref + ". Executing...");
               deploy(json.ref);
               res.writeHead(202, {'Content-Type': 'text/plain'});
