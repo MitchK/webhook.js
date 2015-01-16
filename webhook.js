@@ -2,6 +2,7 @@ var http = require('http');
 var crypto = require('crypto');
 var exec = require('child_process').exec;
 var path = require('path');
+var wildcard = require('wildcard');
 
 if (!process.env.WEBHOOK_REPO_PATH) {
   throw Error("WEBHOOK_REPO_PATH env variable not set");
@@ -10,6 +11,11 @@ if (!process.env.WEBHOOK_REPO_PATH) {
 if (!process.env.WEBHOOK_SECRET) {
   throw Error("WEBHOOK_SECRET env variable not set");
 }
+
+if (!process.env.WEBHOOK_REF_FILTER) {
+  console.log("WARNING! WEBHOOK_REF_FILTER not set. This hook will listen to ANYTHING");
+}
+
 
 
 function hmac(algorithm, key, text, encoding) {
@@ -35,20 +41,50 @@ var server = http.createServer(function(req, res) {
       if (hashSent == hashComputed) {
         var json = JSON.parse(body);
         console.log('Payload received!');
-        console.log(json);
-        exec('cd ' + process.env.WEBHOOK_REPO_PATH + '&& git pull && sh .webhook.sh', function (error, stdout, stderr) {
-            if (error) {
-                console.error(error);
-                res.writeHead(500, {'Content-Type': 'text/plain'});
-                return res.end('Script error, check log file');
-            }
-            
-            process.stdout.write(stdout);
-        });
-        
+
+
+        var execute = function () {
+          exec('cd ' + process.env.WEBHOOK_REPO_PATH + '&& git pull && sh .webhook.sh', function (error, stdout, stderr) {
+              if (error) {
+                  console.error(error);
+                  res.writeHead(500, {'Content-Type': 'text/plain'});
+                  return res.end('Script error, check log file');
+              }
+              
+              process.stdout.write(stdout);
+          });   
+        };
+
+        if (!process.env.WEBHOOK_REF_FILTER) {
+          execute();
+          res.writeHead(202, {'Content-Type': 'text/plain'});
+          res.end('Accepted');
+        }
+
+        if (process.env.WEBHOOK_REF_FILTER 
+          && !json.ref) {
+          console.log('Payload did not contain a ref');
+          res.writeHead(202, {'Content-Type': 'text/plain'});
+          res.end('Accepted');
+        }
+
+        if (process.env.WEBHOOK_REF_FILTER 
+          && json.ref 
+          && !wildcard(process.env.WEBHOOK_REF_FILTER, json.ref)) {
+          console.log('IGNORING REQUEST: Push ref ' + json.ref + ' did not match ref wildcard ' + process.env.WEBHOOK_REF_FILTER);
+          res.writeHead(202, {'Content-Type': 'text/plain'});
+          res.end('Accepted');
+          return;
+        }
+
+        // WEBHOOK_REF_FILTER should be set
+        // json.ref should be set
+        // json.ref should match process.env.WEBHOOK_REF_FILTER 
+        execute();
         
         res.writeHead(202, {'Content-Type': 'text/plain'});
         res.end('Accepted');
+        return;
       }
       else {
         res.writeHead(403, {'Content-Type': 'text/plain'});
