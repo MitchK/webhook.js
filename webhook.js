@@ -45,8 +45,16 @@ var server = http.createServer(function(req, res) {
         console.log('Payload received!');
 
 
-        var execute = function () {
-          exec('cd ' + process.env.WEBHOOK_REPO_PATH + '&& git pull && sh .webhook.sh', function (error, stdout, stderr) {
+        var deploy = function (tag) {
+          var cmd = 'cd ' + process.env.WEBHOOK_REPO_PATH + '&& git pull ';
+
+          if (tag) {
+            cmd += '&& git checkout ' + tag + ' ';
+          }
+
+          cmd += '&& sh .webhook.sh ';
+
+          exec(cmd, function (error, stdout, stderr) {
               if (error) {
                   console.error(error);
                   res.writeHead(500, {'Content-Type': 'text/plain'});
@@ -59,7 +67,7 @@ var server = http.createServer(function(req, res) {
 
         if (!process.env.WEBHOOK_REF_FILTER) {
           console.log("WARNING! WEBHOOK_REF_FILTER not set. Executing anyways... I have warned you...");
-          execute();
+          deploy();
           res.writeHead(202, {'Content-Type': 'text/plain'});
           res.end('Accepted');
         }
@@ -74,7 +82,7 @@ var server = http.createServer(function(req, res) {
 
             if (json.ref.match(process.env.WEBHOOK_REF_FILTER).length > 0) {
               console.log("Push to " + json.ref + ". Executing...");
-              execute();
+              deploy(json.ref);
               res.writeHead(202, {'Content-Type': 'text/plain'});
               res.end('Accepted');
             }
