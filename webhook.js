@@ -46,7 +46,7 @@ var server = http.createServer(function(req, res) {
 
 
         var deploy = function (tag) {
-          var cmd = 'cd ' + process.env.WEBHOOK_REPO_PATH + '&& git pull ';
+          var cmd = 'cd ' + process.env.WEBHOOK_REPO_PATH + '&& git fetch --all ';
 
           if (tag) {
             cmd += '&& git checkout ' + tag + ' ';
