@@ -1,3 +1,6 @@
+repos
+.env
+
 # Logs
 logs
 *.log

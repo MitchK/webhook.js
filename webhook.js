@@ -43,20 +43,24 @@ var server = http.createServer(function(req, res) {
       if (hashSent == hashComputed) {
         var json = JSON.parse(body);
         console.log('Payload received!');
-
+	console.log(json)
 
         var deploy = function (ref) {
           var cmd = '';
+
+          var repoPath = path.join('repos', 
+              json.repository.owner.name,
+              json.repository.name);
           
           // Clean up first
-          cmd += 'rm -rf ' + process.env.WEBHOOK_REPO_PATH + '|| true ; ';
-          
+          cmd += 'rm -rf ' + repoPath + '|| true ; ';
+
           // Shallow clone
-          cmd += 'git clone ' + json.repo + ' ' + process.env.WEBHOOK_REPO_PATH + ';';
+          cmd += 'git clone ' + json.repository.url + ' ' + repoPath + '; cd ' + repoPath + '; ';
           
 
           if (ref) {
-            cmd += 'git checkout ' + tag + '; ';
+            cmd += 'git checkout ' + ref + '; ';
           }
 
           cmd += 'sh .webhook.sh; ';
