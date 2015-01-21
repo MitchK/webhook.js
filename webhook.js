@@ -1,7 +1,4 @@
-var http = require('http');
-var crypto = require('crypto');
-var exec = require('child_process').exec;
-var path = require('path');
+
 
 if (!process.env.WEBHOOK_REPOS_DIR) {
   throw Error("WEBHOOK_REPOS_DIR env variable not set");
@@ -18,6 +15,35 @@ else {
   console.log('INFO: Using ref filter: ' + process.env.WEBHOOK_REF_FILTER);
 }
 
+if (!process.env.GITHUB_USER_TOKEN) {
+  throw Error("GITHUB_USER_TOKEN env variable not set");
+}
+
+
+var http = require('http');
+var crypto = require('crypto');
+var exec = require('child_process').exec;
+var path = require('path');
+
+var GitHubApi = require("github");
+var github = new GitHubApi({
+    // required
+    version: "3.0.0",
+    // optional
+    debug: true,
+    protocol: process.env.GITHUB_PROTOCOL || "https",
+    host: process.env.GITHUB_HOST || 'api.github.com',
+    pathPrefix: process.env.GITHUB_PATH_PREFIX || null, // for some GHEs
+    timeout: 5000,
+    headers: {
+        "user-agent": "MitchK/webhook.js", // GitHub is happy with a unique user agent
+    }
+});
+
+github.authenticate({
+    type: "oauth",
+    token: process.env.GITHUB_USER_TOKEN
+});
 
 
 function hmac(algorithm, key, text, encoding) {
@@ -68,7 +94,30 @@ var server = http.createServer(function(req, res) {
           exec(cmd, function (error, stdout, stderr) {
               if (error) {
                   console.error(error);
-                  return res.end('Script error, check log file');
+                  var body = 'Dear @' + json.pusher.name + ',\n\n';
+                  body += 'The deployment of ' + json.ref + ' failed. Please check the output: \n\n'
+                  body += 'stdout:'
+                  body += '```\n'
+                  body += stdout
+                  body += '```\n\n'
+                  body += 'stderr:'
+                  body += '```\n'
+                  body += stderr
+                  body += '```\n'
+                  body += '\n'
+                  body += 'Best regards,\n'
+                  body += 'webhook.js';
+                  
+                  github.issues.create({
+                  	user: json.repository.owner.name,
+                  	repo: json.repository.name,
+                  	assignee:  json.pusher.name,
+                  	title: 'webhook.js: Deployment failed',
+                  	body: body
+                  }, function() {
+                  	console.log('GitHub issue created');
+                  });
+                  return;
               }
               
               process.stdout.write(stdout);
