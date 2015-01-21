@@ -45,14 +45,21 @@ var server = http.createServer(function(req, res) {
         console.log('Payload received!');
 
 
-        var deploy = function (tag) {
-          var cmd = 'cd ' + process.env.WEBHOOK_REPO_PATH + '&& git fetch --all ';
+        var deploy = function (ref) {
+          var cmd = '';
+          
+          // Clean up first
+          cmd += 'rm -rf ' + process.env.WEBHOOK_REPO_PATH + '|| true ; ';
+          
+          // Shallow clone
+          cmd += 'git clone ' + json.repo + ' ' + process.env.WEBHOOK_REPO_PATH + ';';
+          
 
-          if (tag) {
-            cmd += '&& git checkout ' + tag + ' ';
+          if (ref) {
+            cmd += 'git checkout ' + tag + '; ';
           }
 
-          cmd += '&& sh .webhook.sh ';
+          cmd += 'sh .webhook.sh; ';
 
           exec(cmd, function (error, stdout, stderr) {
               if (error) {
