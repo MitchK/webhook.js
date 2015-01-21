@@ -68,7 +68,6 @@ var server = http.createServer(function(req, res) {
           exec(cmd, function (error, stdout, stderr) {
               if (error) {
                   console.error(error);
-                  res.writeHead(500, {'Content-Type': 'text/plain'});
                   return res.end('Script error, check log file');
               }
               
