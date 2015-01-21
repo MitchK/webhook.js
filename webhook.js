@@ -45,6 +45,14 @@ github.authenticate({
     token: process.env.GITHUB_USER_TOKEN
 });
 
+github.user.get(function (err, user) {
+	if (err) {
+		return console.error(err);
+		
+	}	
+	console.log('Creating issues on error as ' + user.name);
+});
+
 
 function hmac(algorithm, key, text, encoding) {
     var hmac = crypto.createHmac(algorithm, key);
