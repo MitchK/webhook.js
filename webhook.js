@@ -3,8 +3,8 @@ var crypto = require('crypto');
 var exec = require('child_process').exec;
 var path = require('path');
 
-if (!process.env.WEBHOOK_REPO_PATH) {
-  throw Error("WEBHOOK_REPO_PATH env variable not set");
+if (!process.env.WEBHOOK_REPOS_DIR) {
+  throw Error("WEBHOOK_REPOS_DIR env variable not set");
 }
 
 if (!process.env.WEBHOOK_SECRET) {
@@ -48,7 +48,7 @@ var server = http.createServer(function(req, res) {
         var deploy = function (ref) {
           var cmd = '';
 
-          var repoPath = path.join('repos', 
+          var repoPath = path.join(process.env.WEBHOOK_REPOS_DIR || '../repos', 
               json.repository.owner.name,
               json.repository.name);
           
