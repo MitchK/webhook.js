@@ -30,7 +30,7 @@ var github = new GitHubApi({
     // required
     version: "3.0.0",
     // optional
-    debug: true,
+    debug: false,
     protocol: process.env.GITHUB_PROTOCOL || "https",
     host: process.env.GITHUB_HOST || 'api.github.com',
     pathPrefix: process.env.GITHUB_PATH_PREFIX || null, // for some GHEs
@@ -45,7 +45,7 @@ github.authenticate({
     token: process.env.GITHUB_USER_TOKEN
 });
 
-github.user.get(function (err, user) {
+github.user.get({}, function (err, user) {
 	if (err) {
 		return console.error(err);
 		
@@ -104,11 +104,11 @@ var server = http.createServer(function(req, res) {
                   console.error(error);
                   var body = 'Dear @' + json.pusher.name + ',\n\n';
                   body += 'The deployment of ' + json.ref + ' failed. Please check the output: \n\n'
-                  body += 'stdout:'
+                  body += '**stdout:**\n\n'
                   body += '```\n'
                   body += stdout
                   body += '```\n\n'
-                  body += 'stderr:'
+                  body += '**stderr:**\n\n'
                   body += '```\n'
                   body += stderr
                   body += '```\n'
@@ -120,9 +120,13 @@ var server = http.createServer(function(req, res) {
                   	user: json.repository.owner.name,
                   	repo: json.repository.name,
                   	assignee:  json.pusher.name,
+			labels: ['webhook.js', 'shit just got serious'],
                   	title: 'webhook.js: Deployment failed',
                   	body: body
-                  }, function() {
+                  }, function(err) {
+			if (err) {
+				return console.error(err);
+			}
                   	console.log('GitHub issue created');
                   });
                   return;
